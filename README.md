@@ -86,6 +86,6 @@ Run the generated executable from the `build` directory.
 
 ## Author
 
-JITU
+GAURAV YADAV
 
 C++ Intern at CodeAlpha
