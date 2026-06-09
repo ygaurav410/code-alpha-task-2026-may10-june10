@@ -17,5 +17,5 @@ endif()
 
 # Create executable
 add_executable(CGPACalculator
-    tskcode.cpp
+    taskcode.cpp
 )

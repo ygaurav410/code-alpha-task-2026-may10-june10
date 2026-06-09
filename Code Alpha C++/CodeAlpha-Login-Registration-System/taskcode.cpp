@@ -1,19 +1,19 @@
-#include <iostream>
-#include <fstream>
-#include <functional>
-#include <sqlite3.h>
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 
 using namespace std;
 
-// ===================== CONSTANTS =====================
-const string DB_DIR = "data";
-const string DB_NAME = "data/users.db";
-const string TABLE = "USERS";
+const string DATA_DIR = "data";
+const string USERS_FILE = "data/users.txt";
 
-// ===================== INPUT UTILITIES =====================
 int getInt(const string &message)
 {
     while (true)
@@ -24,12 +24,18 @@ int getInt(const string &message)
 
         try
         {
-            return stoi(input);
+            size_t processed = 0;
+            int value = stoi(input, &processed);
+            if (processed == input.size())
+            {
+                return value;
+            }
         }
         catch (...)
         {
-            cout << "\n[Input Error] Please enter a valid number.\n";
         }
+
+        cout << "\n[Input Error] Please enter a valid number.\n";
     }
 }
 
@@ -41,174 +47,148 @@ string getString(const string &message)
     return input;
 }
 
-// ===================== SECURITY =====================
+bool hasCharacterType(const string &value, int (*check)(int))
+{
+    return any_of(value.begin(), value.end(), [check](unsigned char ch) {
+        return check(ch) != 0;
+    });
+}
+
+bool isPasswordStrong(const string &password)
+{
+    return password.length() >= 8 &&
+           hasCharacterType(password, ::isdigit) &&
+           hasCharacterType(password, ::isupper) &&
+           hasCharacterType(password, ::islower);
+}
+
+bool isUsernameValid(const string &username)
+{
+    if (username.empty())
+    {
+        return false;
+    }
+
+    return none_of(username.begin(), username.end(), [](unsigned char ch) {
+        return isspace(ch) || ch == '|';
+    });
+}
+
 string hashPassword(const string &password)
 {
-    hash<string> hasher;
-    return to_string(hasher(password));
-}
-
-// ===================== FILESYSTEM =====================
-void ensureDatabaseDirectory()
-{
-    if (!filesystem::exists(DB_DIR))
+    // FNV-1a gives this educational app a deterministic hash across runs.
+    uint64_t hash = 1469598103934665603ULL;
+    for (unsigned char ch : password)
     {
-        filesystem::create_directory(DB_DIR);
-    }
-}
-
-// ===================== DATABASE CORE =====================
-bool openDatabase(sqlite3 *&db, string &error)
-{
-    ensureDatabaseDirectory();
-
-    if (sqlite3_open(DB_NAME.c_str(), &db) != SQLITE_OK)
-    {
-        error = sqlite3_errmsg(db);
-        return false;
-    }
-    return true;
-}
-
-string createUsersTable()
-{
-    sqlite3 *db;
-    char *errMsg = nullptr;
-    string error;
-
-    if (!openDatabase(db, error))
-        return "Database open failed: " + error;
-
-    string sql =
-        "CREATE TABLE IF NOT EXISTS USERS ("
-        "ID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "USERNAME TEXT UNIQUE NOT NULL,"
-        "PASSWORDHASH TEXT NOT NULL);";
-
-    if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
-    {
-        string err = errMsg;
-        sqlite3_free(errMsg);
-        sqlite3_close(db);
-        return "Table creation failed: " + err;
+        hash ^= ch;
+        hash *= 1099511628211ULL;
     }
 
-    sqlite3_close(db);
-    return "success";
+    ostringstream out;
+    out << hex << setw(16) << setfill('0') << hash;
+    return out.str();
 }
 
-bool validateUsername(const string &username)
+void ensureDataDirectory()
 {
-    sqlite3 *db;
-    sqlite3_stmt *stmt;
-    string error;
+    filesystem::create_directories(DATA_DIR);
+}
 
-    if (!openDatabase(db, error))
-        return false;
+unordered_map<string, string> loadUsers()
+{
+    unordered_map<string, string> users;
+    ifstream file(USERS_FILE);
 
-    string sql = "SELECT 1 FROM USERS WHERE USERNAME = ?;";
-    sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
+    string line;
+    while (getline(file, line))
+    {
+        size_t separator = line.find('|');
+        if (separator == string::npos)
+        {
+            continue;
+        }
 
-    bool exists = (sqlite3_step(stmt) == SQLITE_ROW);
+        string username = line.substr(0, separator);
+        string passwordHash = line.substr(separator + 1);
+        if (!username.empty() && !passwordHash.empty())
+        {
+            users[username] = passwordHash;
+        }
+    }
 
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-    return exists;
+    return users;
+}
+
+bool usernameExists(const string &username)
+{
+    unordered_map<string, string> users = loadUsers();
+    return users.find(username) != users.end();
 }
 
 string addUser(const string &username, const string &passwordHash)
 {
-    sqlite3 *db;
-    sqlite3_stmt *stmt;
-    string error;
+    ensureDataDirectory();
 
-    if (!openDatabase(db, error))
-        return "Database open failed: " + error;
-
-    string sql =
-        "INSERT INTO USERS (USERNAME, PASSWORDHASH) VALUES (?, ?);";
-
-    sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, passwordHash.c_str(), -1, SQLITE_STATIC);
-
-    if (sqlite3_step(stmt) != SQLITE_DONE)
+    ofstream file(USERS_FILE, ios::app);
+    if (!file)
     {
-        string err = sqlite3_errmsg(db);
-        sqlite3_finalize(stmt);
-        sqlite3_close(db);
-
-        return "Registration failed: " + err +
-               "\nPossible reasons:\n"
-               "- Username already exists\n"
-               "- Database file is locked\n"
-               "- Insufficient file permissions";
+        return "Registration failed: unable to open user file.";
     }
 
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
+    file << username << '|' << passwordHash << '\n';
     return "success";
 }
 
 string retrieveUserCredentials(const string &username)
 {
-    sqlite3 *db;
-    sqlite3_stmt *stmt;
-    string error;
-
-    if (!openDatabase(db, error))
-        return "";
-
-    string sql =
-        "SELECT PASSWORDHASH FROM USERS WHERE USERNAME = ?;";
-
-    sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
-
-    string hash = "";
-    if (sqlite3_step(stmt) == SQLITE_ROW)
+    unordered_map<string, string> users = loadUsers();
+    auto it = users.find(username);
+    if (it == users.end())
     {
-        hash = reinterpret_cast<const char *>(
-            sqlite3_column_text(stmt, 0));
+        return "";
     }
 
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-    return hash;
+    return it->second;
 }
 
-// ===================== MAIN FUNCTIONS =====================
-string registerUser(string &username, string &password)
+string registerUser(const string &username, const string &password)
 {
-    string tableStatus = createUsersTable();
-    if (tableStatus != "success")
-        return "[System Error] " + tableStatus;
+    if (!isUsernameValid(username))
+    {
+        return "[Validation Error] Username cannot be empty and must not contain spaces or '|'.";
+    }
 
-    if (validateUsername(username))
+    if (usernameExists(username))
+    {
         return "[Validation Error] Username already exists. Please choose another.";
+    }
 
     string result = addUser(username, hashPassword(password));
     if (result != "success")
+    {
         return result;
+    }
 
     return "Registration successful! You can now log in.";
 }
 
-string loginUser(string &username, string &password)
+string loginUser(const string &username, const string &password)
 {
     string storedHash = retrieveUserCredentials(username);
 
     if (storedHash.empty())
+    {
         return "[Login Failed] Username not found.";
+    }
 
     if (hashPassword(password) != storedHash)
+    {
         return "[Login Failed] Incorrect password.";
+    }
 
     return "Login successful! Welcome back.";
 }
 
-// ===================== UI OPERATIONS =====================
 void Register()
 {
     cout << "\n--- USER REGISTRATION ---\n";
@@ -220,19 +200,16 @@ void Register()
     {
         password = getString("Enter password: ");
 
-        if (password.length() < 8 ||
-            !any_of(password.begin(), password.end(), ::isdigit) ||
-            !any_of(password.begin(), password.end(), ::isupper) ||
-            !any_of(password.begin(), password.end(), ::islower))
+        if (isPasswordStrong(password))
         {
-            cout << "\n[Password Weak]\n"
-                 << "- Minimum 8 characters\n"
-                 << "- At least one uppercase letter\n"
-                 << "- At least one lowercase letter\n"
-                 << "- At least one number\n\n";
-            continue;
+            break;
         }
-        break;
+
+        cout << "\n[Password Weak]\n"
+             << "- Minimum 8 characters\n"
+             << "- At least one uppercase letter\n"
+             << "- At least one lowercase letter\n"
+             << "- At least one number\n\n";
     }
 
     cout << "\n"
@@ -250,7 +227,6 @@ void Login()
          << loginUser(username, password) << endl;
 }
 
-// ===================== MAIN =====================
 int main()
 {
     cout << "Welcome to this Login & Registration System\n";
@@ -265,9 +241,13 @@ int main()
         int choice = getInt("Your option (1-3): ");
 
         if (choice == 1)
+        {
             Register();
+        }
         else if (choice == 2)
+        {
             Login();
+        }
         else if (choice == 3)
         {
             cout << "\nThank you for using the system. Goodbye!\n";
@@ -278,13 +258,13 @@ int main()
             cout << "\n[Input Error] Invalid menu option.\n";
         }
 
-        string cont = getString(
-            "\nDo you want to perform another operation? (y/n): ");
-
+        string cont = getString("\nDo you want to perform another operation? (y/n): ");
         if (cont != "y" && cont != "Y")
         {
             cout << "\nSession ended. Stay safe!\n";
             break;
         }
     }
+
+    return 0;
 }

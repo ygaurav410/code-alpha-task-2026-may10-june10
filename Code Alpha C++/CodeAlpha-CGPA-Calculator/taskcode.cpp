@@ -1,456 +1,385 @@
-#include <iostream>
+#include <cctype>
 #include <iomanip>
+#include <iostream>
+#include <limits>
 #include <string>
 #include <vector>
-#include <cmath>
 
-// UTILITY FUBCTIONS
 int getInt(const std::string &prompt)
 {
     while (true)
     {
-        std::string input;
         std::cout << prompt;
-        getline(std::cin, input);
+        std::string input;
+        std::getline(std::cin, input);
+
         try
         {
-            return std::stoi(input);
+            size_t processed = 0;
+            int value = std::stoi(input, &processed);
+            if (processed == input.size())
+            {
+                return value;
+            }
         }
         catch (...)
         {
-            std::cout << "Invalid input! Try again.\n";
         }
+
+        std::cout << "Invalid input! Try again.\n";
     }
 }
 
 std::string getString(const std::string &prompt)
 {
-    std::string input;
     std::cout << prompt;
-    getline(std::cin, input);
+    std::string input;
+    std::getline(std::cin, input);
     return input;
 }
 
-char getChar(const std::string &prompt)
+char getGradeInput(const std::string &prompt)
 {
     while (true)
     {
-        std::string input;
-        std::cout << prompt;
-        getline(std::cin, input);
-        try
+        std::string input = getString(prompt);
+        if (!input.empty())
         {
-            char c = input[0];
-            return c;
+            return static_cast<char>(std::toupper(static_cast<unsigned char>(input[0])));
         }
-        catch (...)
-        {
-            std::cout << "Invalid input! Try again.\n";
-        }
+
+        std::cout << "Invalid input! Try again.\n";
     }
 }
 
-bool performOperation()
+bool askToContinue()
 {
-    std::cout << "\nWill you like to perform another calculation?" << std::endl;
-    std::string choiceChar = getString("Enter your option (y/n): ");
-    if (choiceChar == "y" || choiceChar == "Y")
+    while (true)
     {
-        return true;
-    }
-    else if (choiceChar == "n" || choiceChar == "N")
-    {
-        std::cout << "\nThank you for using the console app. Exiting...\n"
-                  << std::endl;
-        return false;
-    }
-    else
-    {
-        std::cout << "\nInvalid choice!" << std::endl;
-        return false;
+        std::string choice = getString("\nDo you want to perform another calculation? (y/n): ");
+
+        if (choice == "y" || choice == "Y")
+        {
+            return true;
+        }
+
+        if (choice == "n" || choice == "N")
+        {
+            std::cout << "\nThank you for using the console app. Exiting...\n";
+            return false;
+        }
+
+        std::cout << "Invalid choice! Please enter y or n.\n";
     }
 }
 
-std::string returnSuffix(int j)
+std::string ordinalSuffix(int value)
 {
-    switch (j)
+    if (value % 100 >= 11 && value % 100 <= 13)
+    {
+        return "th";
+    }
+
+    switch (value % 10)
     {
     case 1:
         return "st";
-        break;
     case 2:
         return "nd";
-        break;
     case 3:
         return "rd";
-        break;
     default:
         return "th";
-        break;
     }
 }
 
 int getAcademicYears(int semesters)
 {
-    if (semesters == 1)
-        return 1;
-    else if (semesters % 2 != 0)
-        return (semesters / 2) + 1;
-    else
-        return semesters / 2;
+    return (semesters + 1) / 2;
 }
 
-// POLYMORPHISM APPLICATION
-int convertGrade(const char &grade)
+int gradeToPoint(char grade)
 {
-    if (grade == 'A' || grade == 'a')
+    switch (std::toupper(static_cast<unsigned char>(grade)))
     {
+    case 'A':
         return 5;
-    }
-    else if (grade == 'B' || grade == 'b')
-    {
+    case 'B':
         return 4;
-    }
-    else if (grade == 'C' || grade == 'c')
-    {
+    case 'C':
         return 3;
-    }
-    else if (grade == 'D' || grade == 'd')
-    {
+    case 'D':
         return 2;
-    }
-    else if (grade == 'E' || grade == 'e')
-    {
+    case 'E':
         return 1;
-    }
-    else if (grade == 'F' || grade == 'f')
-    {
+    case 'F':
         return 0;
-    }
-    else
-    {
+    default:
         return -1;
     }
 }
 
-char convertGrade(int &grade)
-{
-    if (grade == 5)
-    {
-        return 'A';
-    }
-    else if (grade == 4)
-    {
-        return 'B';
-    }
-    else if (grade == 3)
-    {
-        return 'C';
-    }
-    else if (grade == 2)
-    {
-        return 'D';
-    }
-    else if (grade == 1)
-    {
-        return 'E';
-    }
-    else if (grade == 0)
-    {
-        return 'F';
-    }
-    return '-';
-}
-
-// CORE CLASSES
 class Course
 {
 private:
-    int grade;
-    int creditHours; // Course Unit
     std::string courseCode;
-    int creditPoints;
+    char grade = 'F';
+    int gradePoint = 0;
+    int creditUnit = 0;
 
 public:
-    int setGrade(char grade)
+    bool setGrade(char newGrade)
     {
-        int realGrade = convertGrade(grade);
-        if (realGrade < 0)
+        int point = gradeToPoint(newGrade);
+        if (point < 0)
         {
-            return -1;
+            return false;
         }
-        this->grade = realGrade;
-        return 1;
+
+        grade = static_cast<char>(std::toupper(static_cast<unsigned char>(newGrade)));
+        gradePoint = point;
+        return true;
     }
-    char getGrade()
+
+    char getGrade() const
     {
-        return convertGrade(this->grade);
+        return grade;
     }
-    void setCreditHours(int creditHours)
+
+    void setCreditUnit(int unit)
     {
-        this->creditHours = creditHours;
+        creditUnit = unit;
     }
-    int getCreditHours()
+
+    int getCreditUnit() const
     {
-        return this->creditHours;
+        return creditUnit;
     }
-    void setCourseCode(std::string courseCode)
+
+    void setCourseCode(const std::string &code)
     {
-        this->courseCode = courseCode;
+        courseCode = code;
     }
-    std::string getCourseCode()
+
+    std::string getCourseCode() const
     {
-        return this->courseCode;
+        return courseCode;
     }
-    int getCreditPoints()
+
+    int getCreditPoints() const
     {
-        return this->grade * this->getCreditHours();
+        return gradePoint * creditUnit;
     }
 };
 
 class Semester
 {
 private:
-    int numberOfCourses;
-    int TNU = 0; // Total Credit Hours or Total Number of Units
-    int TCP = 0; // Total Credit Points
-    float GPA;   // Grade Point Average
-    void setGPA()
-    {
-        GPA = (float)this->TCP / (float)this->TNU;
-    }
+    std::vector<Course> courses;
+    int totalCreditUnits = 0;
+    int totalCreditPoints = 0;
 
 public:
-    void setNumberOfCourses(int numberOfCourses)
+    void addCourse(const Course &course)
     {
-        this->numberOfCourses = numberOfCourses;
+        courses.push_back(course);
+        totalCreditUnits += course.getCreditUnit();
+        totalCreditPoints += course.getCreditPoints();
     }
-    int getNumberOfCourses()
+
+    const std::vector<Course> &getCourses() const
     {
-        return this->numberOfCourses;
+        return courses;
     }
-    void setTNU(int TNU)
+
+    int getTotalCreditUnits() const
     {
-        this->TNU += TNU;
+        return totalCreditUnits;
     }
-    int getTNU()
+
+    int getTotalCreditPoints() const
     {
-        return this->TNU;
+        return totalCreditPoints;
     }
-    void setTCP(int TCP)
+
+    double getGPA() const
     {
-        this->TCP += TCP;
-        this->setGPA();
-    }
-    int getTCP()
-    {
-        return this->TCP;
-    }
-    float getGPA()
-    {
-        return this->GPA;
+        if (totalCreditUnits == 0)
+        {
+            return 0.0;
+        }
+
+        return static_cast<double>(totalCreditPoints) / totalCreditUnits;
     }
 };
 
 class AcademicSession
 {
 private:
-    int numberOfSemesters;
-    int cummulative_TCP;
-    int cummulative_TNU;
-    float CGPA = 0.0f;
+    std::vector<Semester> semesters;
 
 public:
-    void setNumberOfSemesters(int semestersCount)
+    void addSemester(const Semester &semester)
     {
-        this->numberOfSemesters = semestersCount;
+        semesters.push_back(semester);
     }
-    int getNumberOfSemesters()
+
+    const std::vector<Semester> &getSemesters() const
     {
-        return this->numberOfSemesters;
+        return semesters;
     }
-    void setCTCP(int CTCP)
-    { // Setting Cummulative TCP
-        this->cummulative_TCP = CTCP;
-    }
-    int getCTCP()
+
+    double getCGPA() const
     {
-        return this->cummulative_TCP;
-    }
-    void setCTNU(int CTNU)
-    { // Setting Cummulative TNU
-        this->cummulative_TNU = CTNU;
-    }
-    int getCTNU()
-    {
-        return this->cummulative_TNU;
-    }
-    float getCGPA()
-    {
-        if (cummulative_TNU == 0)
-            return 0.0f;
-        return (float)this->cummulative_TCP / (float)this->cummulative_TNU;
+        int totalCreditUnits = 0;
+        int totalCreditPoints = 0;
+
+        for (const Semester &semester : semesters)
+        {
+            totalCreditUnits += semester.getTotalCreditUnits();
+            totalCreditPoints += semester.getTotalCreditPoints();
+        }
+
+        if (totalCreditUnits == 0)
+        {
+            return 0.0;
+        }
+
+        return static_cast<double>(totalCreditPoints) / totalCreditUnits;
     }
 };
 
-// MAIN FUNCTIONS
-void calculateGPA(Course course, Semester semester)
+Course inputCourse(int courseNumber)
+{
+    Course course;
+
+    std::cout << "\n----------- Course " << courseNumber << " -----------\n";
+    course.setCourseCode(getString("Course Code: "));
+
+    while (true)
+    {
+        char grade = getGradeInput("Grade (A-F): ");
+        if (course.setGrade(grade))
+        {
+            break;
+        }
+
+        std::cout << "Invalid grade! Enter A, B, C, D, E, or F.\n";
+    }
+
+    while (true)
+    {
+        int creditUnit = getInt("Credit Unit (1-6): ");
+        if (creditUnit >= 1 && creditUnit <= 6)
+        {
+            course.setCreditUnit(creditUnit);
+            break;
+        }
+
+        std::cout << "Credit unit must be between 1 and 6.\n";
+    }
+
+    return course;
+}
+
+Semester inputSemester(int semesterNumber)
+{
+    Semester semester;
+
+    std::cout << "\n"
+              << semesterNumber << ordinalSuffix(semesterNumber)
+              << " Semester\n";
+
+    int numberOfCourses = 0;
+    while (numberOfCourses < 1)
+    {
+        numberOfCourses = getInt("Enter number of courses: ");
+        if (numberOfCourses < 1)
+        {
+            std::cout << "You must enter at least one course.\n";
+        }
+    }
+
+    for (int i = 1; i <= numberOfCourses; ++i)
+    {
+        semester.addCourse(inputCourse(i));
+    }
+
+    return semester;
+}
+
+void printSemesterResult(const Semester &semester)
+{
+    std::cout << "\n========================================\n";
+    std::cout << "           SEMESTER RESULT\n";
+    std::cout << "========================================\n";
+
+    for (const Course &course : semester.getCourses())
+    {
+        std::cout << course.getCourseCode()
+                  << "  ->  " << course.getGrade() << "\n";
+    }
+
+    std::cout << std::fixed << std::setprecision(2);
+    std::cout << "\nGPA FOR THIS SEMESTER: " << semester.getGPA() << "\n";
+}
+
+void calculateGPA()
 {
     std::cout << "\n========================================\n";
     std::cout << "        GPA CALCULATION (SEMESTER)\n";
     std::cout << "========================================\n";
 
-    int numberOfCourses = getInt("\nEnter the number of courses you took: ");
-    if (numberOfCourses < 1)
-    {
-        std::cout << "\nYou must have offered at least one course!\n";
-        return;
-    }
-
-    std::vector<Course> courses(numberOfCourses);
-    semester.setNumberOfCourses(numberOfCourses);
-
-    for (int i = 1; i <= numberOfCourses; i++)
-    {
-        std::cout << "\n----------- Course " << i << " -----------\n";
-
-        std::string courseCode = getString("Course Code: ");
-        courses[i - 1].setCourseCode(courseCode);
-
-        char grade = getChar("Grade (A–F): ");
-        int value = courses[i - 1].setGrade(grade);
-        if (value < 0)
-        {
-            std::cout << "Invalid Grade Entered!\n";
-            return;
-        }
-
-        int credit_hours = getInt("Credit Unit (1–6): ");
-        if (credit_hours < 1 || credit_hours > 6)
-        {
-            std::cout << "Credit Units must be between 1 and 6!\n";
-            return;
-        }
-
-        courses[i - 1].setCreditHours(credit_hours);
-        semester.setTNU(courses[i - 1].getCreditHours());
-        semester.setTCP(courses[i - 1].getCreditPoints());
-    }
-
-    std::cout << "\n========================================\n";
-    std::cout << "           SEMESTER RESULT\n";
-    std::cout << "========================================\n";
-
-    for (int i = 0; i < numberOfCourses; i++)
-    {
-        std::cout << courses[i].getCourseCode()
-                  << "  ->  " << courses[i].getGrade() << "\n";
-    }
-
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << "\nGPA FOR THIS SEMESTER: "
-              << semester.getGPA() << "\n";
+    Semester semester = inputSemester(1);
+    printSemesterResult(semester);
 }
 
-void calculateCGPA(Course course, Semester semester, AcademicSession session)
+void calculateCGPA()
 {
-    std::cout << "\n==== CALCULATING CGPA FOR TOTAL ACADEMIC SESSIONS ====\n";
+    std::cout << "\n==== CALCULATING CGPA FOR ACADEMIC SESSION ====\n";
 
-    int numberOfSemesters = getInt("\nEnter total number of semesters: ");
-    if (numberOfSemesters < 1)
+    int numberOfSemesters = 0;
+    while (numberOfSemesters < 1)
     {
-        std::cout << "You must have at least one semester!\n";
-        return;
+        numberOfSemesters = getInt("\nEnter total number of semesters: ");
+        if (numberOfSemesters < 1)
+        {
+            std::cout << "You must have at least one semester.\n";
+        }
     }
 
+    AcademicSession session;
     int academicYears = getAcademicYears(numberOfSemesters);
-    session.setNumberOfSemesters(numberOfSemesters);
 
-    int cumulativeTCP = 0;
-    int cumulativeTNU = 0;
-
-    std::vector<std::vector<Course>> allSemesters(numberOfSemesters);
-
-    int semesterIndex = 0;
-
-    for (int year = 1; year <= academicYears; year++)
+    for (int year = 1; year <= academicYears; ++year)
     {
         std::cout << "\n===== ACADEMIC YEAR " << year << " =====\n";
 
-        for (int semInYear = 1; semInYear <= 2 && semesterIndex < numberOfSemesters; semInYear++)
+        for (int semesterInYear = 1; semesterInYear <= 2; ++semesterInYear)
         {
-            Semester currentSemester;
-
-            std::cout << "\n"
-                      << semesterIndex + 1 << returnSuffix(semesterIndex + 1)
-                      << " Semester\n";
-
-            int numberOfCourses = getInt("Enter number of courses: ");
-            if (numberOfCourses < 1)
+            int semesterNumber = (year - 1) * 2 + semesterInYear;
+            if (semesterNumber > numberOfSemesters)
             {
-                std::cout << "You must have offered at least one course!\n";
-                return;
+                break;
             }
 
-            for (int c = 0; c < numberOfCourses; c++)
-            {
-                Course course;
-
-                std::cout << "\nCourse " << c + 1 << "\n";
-                course.setCourseCode(getString("Enter Course Code: "));
-
-                char grade = getChar("Enter Grade (A-F): ");
-                if (course.setGrade(grade) < 0)
-                {
-                    std::cout << "Invalid grade entered!\n";
-                    return;
-                }
-
-                int unit = getInt("Enter Credit Unit (1-6): ");
-                if (unit < 1 || unit > 6)
-                {
-                    std::cout << "Invalid credit unit!\n";
-                    return;
-                }
-
-                course.setCreditHours(unit);
-
-                currentSemester.setTNU(course.getCreditHours());
-                currentSemester.setTCP(course.getCreditPoints());
-
-                cumulativeTNU += course.getCreditHours();
-                cumulativeTCP += course.getCreditPoints();
-
-                allSemesters[semesterIndex].push_back(course);
-            }
-
+            Semester semester = inputSemester(semesterNumber);
             std::cout << std::fixed << std::setprecision(2);
-            std::cout << "\nGPA for this semester: "
-                      << currentSemester.getGPA() << "\n";
-
-            semesterIndex++;
+            std::cout << "\nGPA for this semester: " << semester.getGPA() << "\n";
+            session.addSemester(semester);
         }
     }
 
-    session.setCTNU(cumulativeTNU);
-    session.setCTCP(cumulativeTCP);
-
     std::cout << "\n===== COMPLETE ACADEMIC RESULT =====\n";
 
-    semesterIndex = 0;
-    for (int year = 1; year <= academicYears; year++)
+    const std::vector<Semester> &semesters = session.getSemesters();
+    for (size_t i = 0; i < semesters.size(); ++i)
     {
-        std::cout << "\nACADEMIC YEAR " << year << "\n";
-
-        for (int sem = 1; sem <= 2 && semesterIndex < numberOfSemesters; sem++)
+        std::cout << "\nSemester " << i + 1 << "\n";
+        for (const Course &course : semesters[i].getCourses())
         {
-            std::cout << "Semester " << semesterIndex + 1 << "\n";
-            for (auto &c : allSemesters[semesterIndex])
-            {
-                std::cout << c.getCourseCode()
-                          << " -> " << c.getGrade() << "\n";
-            }
-            semesterIndex++;
+            std::cout << course.getCourseCode()
+                      << " -> " << course.getGrade() << "\n";
         }
     }
 
@@ -462,10 +391,6 @@ int main()
 {
     while (true)
     {
-        Course course;
-        Semester semester;
-        AcademicSession session;
-
         std::cout << "\n========================================\n";
         std::cout << "        WELCOME TO CGPA CALCULATOR\n";
         std::cout << "========================================\n";
@@ -481,36 +406,35 @@ int main()
 
         if (choice == 1)
         {
-            std::cout << "\n>>> GPA Calculation Selected <<<\n";
-            calculateGPA(course, semester);
-
-            if (performOperation())
+            calculateGPA();
+            if (askToContinue())
+            {
                 continue;
-
+            }
             break;
         }
-        else if (choice == 2)
+
+        if (choice == 2)
         {
-            std::cout << "\n>>> CGPA Calculation Selected <<<\n";
-            calculateCGPA(course, semester, session);
-
-            if (performOperation())
+            calculateCGPA();
+            if (askToContinue())
+            {
                 continue;
-
+            }
             break;
         }
-        else if (choice == 3)
+
+        if (choice == 3)
         {
             std::cout << "\n========================================\n";
             std::cout << "   Thank you for using CGPA Calculator\n";
-            std::cout << "            Goodbye 👋\n";
+            std::cout << "            Goodbye\n";
             std::cout << "========================================\n";
             break;
         }
-        else
-        {
-            std::cout << "\n❌ Invalid choice! Please select 1, 2 or 3.\n";
-            continue;
-        }
+
+        std::cout << "\nInvalid choice! Please select 1, 2 or 3.\n";
     }
+
+    return 0;
 }

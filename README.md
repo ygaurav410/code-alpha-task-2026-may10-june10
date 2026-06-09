@@ -1,156 +1,91 @@
-# 🚀 CodeAlpha C++ Internship Projects
+# CodeAlpha C++ Internship Projects
 
-This repository contains **three complete C++ console applications** developed as part of the **CodeAlpha C++ Internship Program**.
+This repository contains three C++ console applications developed for the CodeAlpha C++ Internship Program.
 
-Each project addresses a specific task assigned by CodeAlpha and demonstrates strong understanding of **Object-Oriented Programming (OOP)**, **file handling**, **program structure**, and **user interaction** using **modern C++**.
+Each project demonstrates object-oriented programming, input validation, file-backed persistence where needed, and menu-driven console interaction.
 
----
+## Repository Structure
 
-## 📂 Repository Structure
-
-<!-- Structure -->
-```
-CODE ALPHA C++/
-├── CodeAlpha_CGPA_Calculator/
-│ ├── taskcode.cpp
-│ ├── CMakeLists.txt
-│ └── README.md
-│
-├── CodeAlpha_Login_Registration_System/
-│ ├── taskcode.cpp
-│ ├── CMakeLists.txt
-│ └── README.md
-│
-├── CodeAlpha_Banking_System/
-│ ├── taskcode.cpp
-│ ├── CMakeLists.txt
-│ └── README.md
-|
-├── .gitignore
-└── README.md <-- (This file)
+```text
+Code Alpha C++/
+|-- CodeAlpha-CGPA-Calculator/
+|   |-- taskcode.cpp
+|   |-- CMakeLists.txt
+|   `-- README.md
+|-- CodeAlpha-Login-Registration-System/
+|   |-- taskcode.cpp
+|   |-- CMakeLists.txt
+|   `-- README.md
+|-- CodeAlpha-Banking-System/
+|   |-- taskcode.cpp
+|   |-- CMakeLists.txt
+|   `-- README.md
+`-- README.md
 ```
 
-Each project folder contains:
-- Complete source code
-- Its own `CMakeLists.txt`
-- A **project-specific README** explaining implementation details
+## Projects
 
----
+### Task 1: CGPA Calculator
 
-## ✅ Task 1: CGPA Calculator
+Folder: `Code Alpha C++/CodeAlpha-CGPA-Calculator`
 
-📁 **Project Folder:** `CodeAlpha_CGPA_Calculator`
+The CGPA Calculator computes student performance across one or more semesters.
 
-### 🎯 Task Description
-The CGPA Calculator computes a student's academic performance across multiple semesters.
+Features:
+- Calculate GPA for a single semester.
+- Calculate CGPA across multiple semesters.
+- Capture course code, grade, and credit unit for each course.
+- Display course grades, semester GPA, and final CGPA.
+- Group semesters into academic years.
 
-### ✔ Features Implemented
-- Input number of courses per semester
-- Input grade and credit unit for each course
-- Automatic calculation of:
-  - Total credit units
-  - Total grade points
-  - Semester GPA
-  - Overall CGPA
-- Display of:
-  - Individual course grades
-  - Semester GPA
-  - Final CGPA
-- Intelligent grouping of semesters into academic years  
-  *(2 semesters = 1 academic year)*
+### Task 2: Login and Registration System
 
-✔ Fully meets **CodeAlpha Task 1 requirements**
+Folder: `Code Alpha C++/CodeAlpha-Login-Registration-System`
 
----
+The Login and Registration System lets users register and log in using stored credentials.
 
-## ✅ Task 2: Login and Registration System
+Features:
+- Register users with username and password validation.
+- Prevent duplicate usernames.
+- Store password hashes in a local file.
+- Verify login credentials.
+- Show clear success and error messages.
 
-📁 **Project Folder:** `CodeAlpha_Login_Registration_System`
+### Task 4: Banking System
 
-### 🎯 Task Description
-A basic authentication system that allows users to register and log in securely.
+Folder: `Code Alpha C++/CodeAlpha-Banking-System`
 
-### ✔ Features Implemented
-- User registration with:
-  - Username
-  - Password validation
-- Prevention of duplicate usernames
-- Secure storage of credentials using file handling
-- Login verification against stored credentials
-- Clear success and error feedback messages
+The Banking System simulates common account operations.
 
-✔ Fully meets **CodeAlpha Task 2 requirements**
+Features:
+- Create customer accounts.
+- Deposit and withdraw funds.
+- Transfer funds between accounts.
+- View balances and customer details.
+- Track timestamped transaction history.
+- Validate input for account and transaction operations.
 
----
+## Build Instructions
 
-## ✅ Task 4: Banking System
-
-📁 **Project Folder:** `CodeAlpha_Banking_System`
-
-### 🎯 Task Description
-A console-based banking application simulating real-world banking operations.
-
-### ✔ Features Implemented
-- Object-oriented design using:
-  - `Customer`
-  - `Account`
-  - `Transaction`
-- Create and manage bank accounts
-- Deposit and withdraw funds
-- Transfer funds between accounts
-- View account balance
-- Display customer account details
-- View complete transaction history with timestamps
-- Input validation for all operations
-
-✔ Fully meets **CodeAlpha Task 4 requirements**
-
----
-
-## 🛠 Technologies Used
-
-- **Language:** C++ (C++17)
-- **Programming Paradigm:** Object-Oriented Programming (OOP)
-- **Build System:** CMake
-- **Compiler:** GCC / Clang / MSVC
-- **Platform:** Linux / Windows
-
----
-
-## ⚙️ How to Build Any Project
+Build any project from its own folder:
 
 ```bash
-cd <Project_Folder>
-mkdir build
-cd build
-cmake ..
-cmake --build .
+cd "Code Alpha C++/<Project-Folder>"
+cmake -S . -B build
+cmake --build build
 ```
 
 Run the generated executable from the `build` directory.
 
----
+## Technologies
 
-## 🎯 Learning Outcomes
+- C++17
+- CMake
+- Standard C++ libraries
+- GCC, Clang, or MSVC-compatible compiler
 
-Through these projects, the following concepts were applied:
+## Author
 
-- C++ class design and encapsulation  
-- File handling for persistent storage  
-- Modular program structure  
-- Input validation and error handling  
-- Menu-driven console applications  
-- Real-world problem modeling using C++
+JITU
 
----
-
-## 👤 Author
-**JITU** 
-*C++ Intern at CodeAlpha*  
-*Systems & Backend Programming Enthusiast*
-
----
-
-## 🏁 Acknowledgement
-
-Special thanks to **CodeAlpha** for providing practical, skill-focused tasks that encourage real-world software development using **C++**.
+C++ Intern at CodeAlpha

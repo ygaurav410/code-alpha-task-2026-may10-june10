@@ -1,147 +1,132 @@
-#include <iostream>
-#include <random>
-#include <string>
-#include <sstream>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
-#include <vector>
-#include <unordered_set>
+#include <iostream>
+#include <random>
+#include <sstream>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
-// STRUCTS
 struct TransactionDetails
 {
     int id;
     std::string transactionDate;
     std::string description;
-    float amount;
-    float balance;
+    double amount;
+    double balance;
 };
 
 struct CustomerDetails
 {
     std::string name;
     int age;
-    long long NIN;
-    int accountNumber;
+    long long nin;
+    long long accountNumber;
 };
 
-// CLASSES
 class Customer
 {
 private:
-    std::vector<int> AccountNumbers;
-    std::unordered_set<int> accNumberSet;
-    std::string firstname, surname;
-    int age;
-    long long NIN;
+    std::string firstname;
+    std::string surname;
+    int age = 0;
+    long long nin = 0;
 
 public:
-    void setFirstname(std::string firstname)
+    void setFirstname(const std::string &value)
     {
-        this->firstname = firstname;
+        firstname = value;
     }
-    void setSurname(std::string surname)
-    {
-        this->surname = surname;
-    }
-    void setAge(int age)
-    {
-        this->age = age;
-    }
-    void setNIN(long long nin)
-    {
-        this->NIN = nin;
-    }
-    std::string getName()
-    {
-        std::string name = this->surname + " " + this->firstname;
-        return name;
-    }
-    int getAge()
-    {
-        return this->age;
-    }
-    long long retrieveNIN()
-    {
-        return this->NIN;
-    }
-    bool accNumberExists(int accNumber)
-    {
-        return accNumberSet.find(accNumber) != accNumberSet.end();
-    }
-    int generateAccountNumber()
-    {
-        std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
-        std::uniform_int_distribution<> dis(0, 9);
-        std::string accNumber;
-        do
-        {
-            accNumber = "10";
-            for (int i = 0; i < 8; i++)
-            {
-                accNumber += std::to_string(dis(gen));
-            }
-        } while (accNumberExists(stoi(accNumber)));
-        AccountNumbers.push_back(stoi(accNumber));
-        accNumberSet.insert(stoi(accNumber));
 
-        return std::stoi(accNumber);
+    void setSurname(const std::string &value)
+    {
+        surname = value;
+    }
+
+    void setAge(int value)
+    {
+        age = value;
+    }
+
+    void setNIN(long long value)
+    {
+        nin = value;
+    }
+
+    std::string getName() const
+    {
+        return surname + " " + firstname;
+    }
+
+    int getAge() const
+    {
+        return age;
+    }
+
+    long long getNIN() const
+    {
+        return nin;
     }
 };
 
 class Account
 {
 private:
-    long int account_number;
-    float account_balance = 0; // Demo
+    long long accountNumber = 0;
+    double accountBalance = 10000.0;
 
 public:
-    void setAccNumber(int accNumber)
+    void setAccountNumber(long long value)
     {
-        this->account_number = accNumber;
-        this->account_balance = 10000; // Demo
+        accountNumber = value;
     }
-    void setAccBalance(float accBalance)
+
+    long long getAccountNumber() const
     {
-        this->account_balance = accBalance;
+        return accountNumber;
     }
-    long int getAccNumber()
+
+    void setAccountBalance(double value)
     {
-        return this->account_number;
+        accountBalance = value;
     }
-    float getAccBalance()
+
+    double getAccountBalance() const
     {
-        return this->account_balance;
+        return accountBalance;
     }
 };
 
 class Transaction
 {
 private:
-    int id;
+    int id = 0;
     std::string transactionDate;
     std::string description;
-    float amount;
-    float balance;
+    double amount = 0.0;
+    double balance = 0.0;
 
 public:
-    void setTransaction(int id, std::string transactionDate, std::string description, float amount, float balance)
+    void setTransaction(int transactionId,
+                        const std::string &date,
+                        const std::string &transactionDescription,
+                        double transactionAmount,
+                        double accountBalance)
     {
-        this->id = id;
-        this->transactionDate = transactionDate;
-        this->description = description;
-        this->amount = amount;
-        this->balance = balance;
+        id = transactionId;
+        transactionDate = date;
+        description = transactionDescription;
+        amount = transactionAmount;
+        balance = accountBalance;
     }
-    TransactionDetails getTransactionDetails()
+
+    TransactionDetails getTransactionDetails() const
     {
         return {id, transactionDate, description, amount, balance};
-    };
+    }
 };
 
-// STRUCT
 struct BankAccount
 {
     CustomerDetails customerDetails;
@@ -149,318 +134,407 @@ struct BankAccount
     std::vector<Transaction> transactions;
 };
 
-// GLOBAL VARIABLES
-std::unordered_map<long int, BankAccount> bankDatabase;
+std::unordered_map<long long, BankAccount> bankDatabase;
 
-// UTILITY FUNCTIONS
-bool accountExists(long int accNumber)
+bool accountExists(long long accountNumber)
 {
-    return bankDatabase.find(accNumber) != bankDatabase.end();
+    return bankDatabase.find(accountNumber) != bankDatabase.end();
 }
 
 int getInt(const std::string &prompt)
 {
     while (true)
     {
-        std::string input;
         std::cout << prompt;
+        std::string input;
         std::getline(std::cin, input);
 
         try
         {
-            return std::stoi(input);
+            size_t processed = 0;
+            int value = std::stoi(input, &processed);
+            if (processed == input.size())
+            {
+                return value;
+            }
         }
         catch (...)
         {
-            std::cout << "Invalid input. Try again.\n";
         }
+
+        std::cout << "Invalid input. Try again.\n";
     }
 }
 
-long long getLong(const std::string &prompt)
+long long getLongLong(const std::string &prompt)
 {
     while (true)
     {
-        std::string input;
         std::cout << prompt;
+        std::string input;
         std::getline(std::cin, input);
 
         try
         {
-            return std::stoll(input);
+            size_t processed = 0;
+            long long value = std::stoll(input, &processed);
+            if (processed == input.size())
+            {
+                return value;
+            }
         }
         catch (...)
         {
-            std::cout << "Invalid input. Try again.\n";
         }
+
+        std::cout << "Invalid input. Try again.\n";
     }
+}
+
+double getMoney(const std::string &prompt)
+{
+    while (true)
+    {
+        std::cout << prompt;
+        std::string input;
+        std::getline(std::cin, input);
+
+        try
+        {
+            size_t processed = 0;
+            double value = std::stod(input, &processed);
+            if (processed == input.size() && value > 0.0)
+            {
+                return value;
+            }
+        }
+        catch (...)
+        {
+        }
+
+        std::cout << "Enter an amount greater than 0.\n";
+    }
+}
+
+std::string getString(const std::string &prompt)
+{
+    std::cout << prompt;
+    std::string input;
+    std::getline(std::cin, input);
+    return input;
 }
 
 std::string getCurrentDateTime()
 {
     auto now = std::chrono::system_clock::now();
-    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::time_t nowTime = std::chrono::system_clock::to_time_t(now);
 
     std::tm localTime{};
-    localtime_s(&localTime, &now_c); //window
+#ifdef _WIN32
+    localtime_s(&localTime, &nowTime);
+#else
+    localtime_r(&nowTime, &localTime);
+#endif
 
     std::ostringstream oss;
     oss << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S");
-
     return oss.str();
 }
 
 bool performOperation()
 {
-    std::cout << "\n-------------------------------------\n";
-    std::cout << "Do you wish to perform another operation? (y/n)\n";
-    std::cout << "Your option: ";
-    std::string choiceChar;
-    getline(std::cin, choiceChar);
-    if (choiceChar == "y" || choiceChar == "Y")
+    while (true)
     {
-        return true;
-    }
-    else if (choiceChar == "n" || choiceChar == "N")
-    {
-        std::cout << "\nThank you for using this Banking System. Exiting...\n"
-                  << std::endl;
-        ;
-        return false;
-    }
-    else
-    {
-        std::cout << "\nInvalid choice!" << std::endl;
-        return false;
+        std::string choice = getString("\nDo you wish to perform another operation? (y/n): ");
+
+        if (choice == "y" || choice == "Y")
+        {
+            return true;
+        }
+
+        if (choice == "n" || choice == "N")
+        {
+            std::cout << "\nThank you for using this Banking System. Exiting...\n";
+            return false;
+        }
+
+        std::cout << "Invalid choice! Please enter y or n.\n";
     }
 }
 
 bool isNINValid(long long nin)
 {
-    return (nin >= 10000000000LL && nin <= 99999999999LL);
+    return nin >= 10000000000LL && nin <= 99999999999LL;
 }
 
-// SWITCH FUNCTIONS
+long long generateAccountNumber()
+{
+    static std::mt19937 generator(std::random_device{}());
+    std::uniform_int_distribution<long long> distribution(1000000000LL, 1999999999LL);
+
+    long long accountNumber = 0;
+    do
+    {
+        accountNumber = distribution(generator);
+    } while (accountExists(accountNumber));
+
+    return accountNumber;
+}
+
+void addTransaction(BankAccount &bankAccount,
+                    const std::string &description,
+                    double amount,
+                    double balance)
+{
+    Transaction transaction;
+    int transactionId = static_cast<int>(bankAccount.transactions.size()) + 1;
+    transaction.setTransaction(transactionId, getCurrentDateTime(), description, amount, balance);
+    bankAccount.transactions.push_back(transaction);
+}
+
 void CreateAccount()
 {
     Customer customer;
     Account account;
 
-    std::string surname, firstname;
-    int age = 0;
-    long long NIN = 1000000001;
-    std::cout << "\n\nYou are welcome to this banking system!"
-              << "\nKindly provide us with some of your details"
-              << "\n\nEnter your last name (surname): ";
-    getline(std::cin, surname);
-    std::cout << "\nEnter your first name: ";
-    getline(std::cin, firstname);
-    while (age < 18)
-    {
-        age = getInt("\nEnter your age: ");
-        if (age < 18)
-        {
-            std::cout << "I'm sorry, you are not allowed to create an account yet." << std::endl;
-        }
-    }
-    // while (isNINValid(NIN))
-    // {
+    std::cout << "\nYou are welcome to this banking system.\n";
+    std::cout << "Kindly provide your details.\n";
+
+    std::string surname;
     do
     {
-        NIN = getLong("\nEnter your NIN no: ");
-        if (!isNINValid(NIN))
+        surname = getString("\nEnter your last name (surname): ");
+        if (surname.empty())
         {
-            std::cout << "Inavlid NIN. NIN must be exactly 11 digits." << std::endl;
+            std::cout << "Surname cannot be empty.\n";
         }
-    } while (!isNINValid(NIN));
-    std::cout << "NIN accepted: " << NIN << std::endl;
+    } while (surname.empty());
 
-    // Setting customer details
+    std::string firstname;
+    do
+    {
+        firstname = getString("Enter your first name: ");
+        if (firstname.empty())
+        {
+            std::cout << "First name cannot be empty.\n";
+        }
+    } while (firstname.empty());
+
+    int age = 0;
+    while (age < 18)
+    {
+        age = getInt("Enter your age: ");
+        if (age < 18)
+        {
+            std::cout << "You must be at least 18 years old to create an account.\n";
+        }
+    }
+
+    long long nin = 0;
+    do
+    {
+        nin = getLongLong("Enter your NIN number: ");
+        if (!isNINValid(nin))
+        {
+            std::cout << "Invalid NIN. NIN must be exactly 11 digits.\n";
+        }
+    } while (!isNINValid(nin));
+
     customer.setSurname(surname);
     customer.setFirstname(firstname);
     customer.setAge(age);
-    customer.setNIN(NIN);
-    long int accountNumber = customer.generateAccountNumber();
-    account.setAccNumber(accountNumber);
+    customer.setNIN(nin);
 
-    // Saving Customer Details
+    long long accountNumber = generateAccountNumber();
+    account.setAccountNumber(accountNumber);
+
     CustomerDetails details;
     details.name = customer.getName();
     details.age = customer.getAge();
-    details.NIN = customer.retrieveNIN();
+    details.nin = customer.getNIN();
     details.accountNumber = accountNumber;
-    // details.accountBalance = account.getAccBalance();
 
-    std::vector<Transaction> transactionList;
+    bankDatabase[accountNumber] = {details, account, {}};
 
-    bankDatabase[accountNumber] = {details, account, transactionList};
-
-    std::cout << "\nAccount created successfully!";
-    std::cout << "\nAccount Number: " << accountNumber << std::endl;
+    std::cout << "\nAccount created successfully!\n";
+    std::cout << "Account Number: " << accountNumber << "\n";
+    std::cout << "Opening Balance: " << std::fixed << std::setprecision(2)
+              << account.getAccountBalance() << "\n";
 }
 
 void BalanceEnquiry()
 {
-    std::string accNumber;
-    std::cout << "\nEnter account number: ";
-    getline(std::cin, accNumber);
+    long long accountNumber = getLongLong("\nEnter account number: ");
 
-    if (!accountExists(std::stoi(accNumber)))
+    if (!accountExists(accountNumber))
     {
-        std::cout << "Invalid account number!" << std::endl;
+        std::cout << "Invalid account number!\n";
         return;
     }
 
-    BankAccount &bankAcc = bankDatabase[stoi(accNumber)];
-    std::cout << "\nAccount Balance: " << bankAcc.account.getAccBalance() << std::endl;
+    BankAccount &bankAccount = bankDatabase[accountNumber];
+    std::cout << "\nAccount Balance: " << std::fixed << std::setprecision(2)
+              << bankAccount.account.getAccountBalance() << "\n";
 }
 
 void DepositFund()
 {
-    long int accNumber = getLong("\nEnter account number: ");
+    long long accountNumber = getLongLong("\nEnter account number: ");
 
-    if (!accountExists(accNumber))
+    if (!accountExists(accountNumber))
     {
-        std::cout << "Invalid account number!" << std::endl;
+        std::cout << "Invalid account number!\n";
         return;
     }
 
-    float depositAmount = getLong("\nEnter amount to deposit: ");
+    double depositAmount = getMoney("Enter amount to deposit: ");
 
-    BankAccount &bankAcc = bankDatabase[accNumber];
-    float currentBalance = bankAcc.account.getAccBalance();
-    bankAcc.account.setAccBalance(currentBalance + depositAmount);
+    BankAccount &bankAccount = bankDatabase[accountNumber];
+    double newBalance = bankAccount.account.getAccountBalance() + depositAmount;
+    bankAccount.account.setAccountBalance(newBalance);
+    addTransaction(bankAccount, "Deposit", depositAmount, newBalance);
 
-    int newTransactionId = bankAcc.transactions.size() + 1;
-    Transaction transaction;
-    transaction.setTransaction(newTransactionId, getCurrentDateTime(), "Deposit", depositAmount, currentBalance + depositAmount);
-    bankAcc.transactions.push_back(transaction);
-
-    std::cout << "Amount " << depositAmount << " successfully deposited into account!" << std::endl;
+    std::cout << "Amount " << std::fixed << std::setprecision(2)
+              << depositAmount << " successfully deposited.\n";
 }
 
 void Withdrawal()
 {
-    long accNum = getLong("\nPlease enter your account number: ");
+    long long accountNumber = getLongLong("\nPlease enter your account number: ");
 
-    float accBalance = bankDatabase[accNum].account.getAccBalance();
-    std::cout << "Your account balance: " << accBalance;
-
-    long int withdrawalAmount = getInt("\nPlease enter how much you'll like to withdraw: ");
-
-    if (withdrawalAmount > accBalance)
+    if (!accountExists(accountNumber))
     {
-        std::cout << "\nInsufficient funds!" << std::endl;
+        std::cout << "Invalid account number!\n";
+        return;
     }
 
-    bankDatabase[accNum].account.setAccBalance(accBalance - withdrawalAmount);
+    BankAccount &bankAccount = bankDatabase[accountNumber];
+    double currentBalance = bankAccount.account.getAccountBalance();
+    std::cout << "Your account balance: " << std::fixed << std::setprecision(2)
+              << currentBalance << "\n";
 
-    int newTransactionId = bankDatabase[accNum].transactions.size() + 1;
+    double withdrawalAmount = getMoney("Please enter how much you would like to withdraw: ");
+    if (withdrawalAmount > currentBalance)
+    {
+        std::cout << "Insufficient funds!\n";
+        return;
+    }
 
-    Transaction transaction;
-    transaction.setTransaction(newTransactionId, getCurrentDateTime(), "Withdrawal", withdrawalAmount, accBalance - withdrawalAmount);
-    bankDatabase[accNum].transactions.push_back(transaction);
+    double newBalance = currentBalance - withdrawalAmount;
+    bankAccount.account.setAccountBalance(newBalance);
+    addTransaction(bankAccount, "Withdrawal", withdrawalAmount, newBalance);
 
-    std::cout << "\nYou have successfully withdrawn " << withdrawalAmount << ". \nYour account balance is: " << bankDatabase[accNum].account.getAccBalance();
+    std::cout << "You have successfully withdrawn " << std::fixed << std::setprecision(2)
+              << withdrawalAmount << ".\nYour account balance is: " << newBalance << "\n";
 }
 
 void Transfer()
 {
-    long int accNumber = getLong("\nEnter account number: ");
+    long long senderAccountNumber = getLongLong("\nEnter sender account number: ");
 
-    if (!accountExists(accNumber))
+    if (!accountExists(senderAccountNumber))
     {
-        std::cout << "Invalid account number!" << std::endl;
+        std::cout << "Invalid sender account number!\n";
         return;
     }
 
-    BankAccount &bankAcc = bankDatabase[accNumber];
-    float senderBal = bankAcc.account.getAccBalance();
-    std::cout << "Your available balance: " << senderBal;
+    long long recipientAccountNumber = getLongLong("Enter recipient account number: ");
 
-    long int recAccNumber = getLong("\nEnter reciepient's account number: ");
-
-    if (!accountExists(recAccNumber))
+    if (!accountExists(recipientAccountNumber))
     {
-        std::cout << "Invalid account number!" << std::endl;
+        std::cout << "Invalid recipient account number!\n";
         return;
     }
 
-    BankAccount &recBankAcc = bankDatabase[recAccNumber];
-    float recAccBalance = recBankAcc.account.getAccBalance();
+    if (senderAccountNumber == recipientAccountNumber)
+    {
+        std::cout << "Sender and recipient accounts must be different.\n";
+        return;
+    }
 
-    std::cout << "\n"
-              << recBankAcc.customerDetails.name << std::endl;
+    BankAccount &sender = bankDatabase[senderAccountNumber];
+    BankAccount &recipient = bankDatabase[recipientAccountNumber];
 
-    float amount = getLong("\nEnter amount to transfer: ");
+    double senderBalance = sender.account.getAccountBalance();
+    std::cout << "Your available balance: " << std::fixed << std::setprecision(2)
+              << senderBalance << "\n";
+    std::cout << "Recipient: " << recipient.customerDetails.name << "\n";
 
-    // Depositing Reciepient Account
-    recBankAcc.account.setAccBalance(recAccBalance + amount);
-    int newTransactionId = bankDatabase[recAccNumber].transactions.size() + 1;
-    Transaction transaction;
-    transaction.setTransaction(newTransactionId, getCurrentDateTime(), "Deposit", amount, recAccBalance + amount);
-    recBankAcc.transactions.push_back(transaction);
+    double amount = getMoney("Enter amount to transfer: ");
+    if (amount > senderBalance)
+    {
+        std::cout << "Insufficient funds!\n";
+        return;
+    }
 
-    // Deducting Sender Account
-    bankAcc.account.setAccBalance(senderBal - amount);
-    int newTransactionId2 = bankDatabase[accNumber].transactions.size() + 1;
-    Transaction transaction2;
-    transaction2.setTransaction(newTransactionId2, getCurrentDateTime(), "Fund Transfer", amount, senderBal - amount);
-    bankAcc.transactions.push_back(transaction2);
+    double recipientBalance = recipient.account.getAccountBalance() + amount;
+    recipient.account.setAccountBalance(recipientBalance);
+    addTransaction(recipient, "Transfer Received", amount, recipientBalance);
 
-    std::cout << "Fund successfully sent to " << recBankAcc.customerDetails.name << std::endl;
+    double newSenderBalance = senderBalance - amount;
+    sender.account.setAccountBalance(newSenderBalance);
+    addTransaction(sender, "Fund Transfer", amount, newSenderBalance);
+
+    std::cout << "Fund successfully sent to "
+              << recipient.customerDetails.name << ".\n";
 }
 
 void CustomerInfo()
 {
-    long int accNumber = getLong("\nEnter account number: ");
+    long long accountNumber = getLongLong("\nEnter account number: ");
 
-    if (!accountExists(accNumber))
+    if (!accountExists(accountNumber))
     {
-        std::cout << "Account not found!" << std::endl;
+        std::cout << "Account not found!\n";
         return;
     }
 
-    BankAccount &bankAcc = bankDatabase[accNumber];
-    CustomerDetails &info = bankAcc.customerDetails;
+    BankAccount &bankAccount = bankDatabase[accountNumber];
+    CustomerDetails &info = bankAccount.customerDetails;
 
     std::cout << "\nAccount Number: " << info.accountNumber;
     std::cout << "\nOwner's Name: " << info.name;
     std::cout << "\nOwner's Age: " << info.age;
-    std::cout << "\nOwner's NIN: " << info.NIN;
-    std::cout << "\nAccount Balance: " << bankAcc.account.getAccBalance() << std::endl;
+    std::cout << "\nOwner's NIN: " << info.nin;
+    std::cout << "\nAccount Balance: " << std::fixed << std::setprecision(2)
+              << bankAccount.account.getAccountBalance() << "\n";
 }
 
 void TransactionHistory()
 {
-    long int accNumber = getLong("\nEnter account number: ");
+    long long accountNumber = getLongLong("\nEnter account number: ");
 
-    if (!accountExists(accNumber))
+    if (!accountExists(accountNumber))
     {
-        std::cout << "Account not found!" << std::endl;
+        std::cout << "Account not found!\n";
         return;
     }
 
-    BankAccount &bankAcc = bankDatabase[accNumber];
-
-    for (Transaction &txn : bankAcc.transactions)
+    BankAccount &bankAccount = bankDatabase[accountNumber];
+    if (bankAccount.transactions.empty())
     {
-        TransactionDetails history = txn.getTransactionDetails();
+        std::cout << "No transactions found for this account.\n";
+        return;
+    }
+
+    for (const Transaction &transaction : bankAccount.transactions)
+    {
+        TransactionDetails history = transaction.getTransactionDetails();
         std::cout << "\nTransaction ID: " << history.id;
         std::cout << "\nTransaction Date: " << history.transactionDate;
         std::cout << "\nTransaction Description: " << history.description;
-        std::cout << "\nTransaction Amount: " << history.amount;
-        std::cout << "\nBalance: " << history.balance << std::endl;
+        std::cout << "\nTransaction Amount: " << std::fixed << std::setprecision(2)
+                  << history.amount;
+        std::cout << "\nBalance: " << history.balance << "\n";
     }
 }
 
-// MAIN FUNCTION
 int main()
 {
     while (true)
     {
         std::cout << "\n=====================================\n";
-        std::cout << "      WELCOME TO THE BANKING SYSTEM   \n";
+        std::cout << "      WELCOME TO THE BANKING SYSTEM\n";
         std::cout << "=====================================\n";
         std::cout << "Please select an operation below:\n\n";
 
@@ -473,75 +547,52 @@ int main()
         std::cout << "  7. Print Transaction History\n";
         std::cout << "  8. Exit\n";
 
-        int choice = getInt("\nEnter your option (1–8): ");
+        int choice = getInt("\nEnter your option (1-8): ");
 
         if (choice == 1)
         {
             CreateAccount();
-            if (performOperation())
-                continue;
-            break;
         }
-
         else if (choice == 2)
         {
             BalanceEnquiry();
-            if (performOperation())
-                continue;
-            break;
         }
-
         else if (choice == 3)
         {
             DepositFund();
-            if (performOperation())
-                continue;
-            break;
         }
-
         else if (choice == 4)
         {
             Withdrawal();
-            if (performOperation())
-                continue;
-            break;
         }
-
         else if (choice == 5)
         {
             Transfer();
-            if (performOperation())
-                continue;
-            break;
         }
-
         else if (choice == 6)
         {
             CustomerInfo();
-            if (performOperation())
-                continue;
-            break;
         }
-
         else if (choice == 7)
         {
             TransactionHistory();
-            if (performOperation())
-                continue;
-            break;
         }
-
         else if (choice == 8)
         {
             std::cout << "\nThank you for using this Banking System. Exiting...\n";
             break;
         }
-
         else
         {
             std::cout << "\nInvalid option! Please try again.\n";
             continue;
         }
+
+        if (!performOperation())
+        {
+            break;
+        }
     }
+
     return 0;
 }
